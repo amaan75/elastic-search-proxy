@@ -1,1 +1,128 @@
-ReadME
+# Elasticsearch Proxy Service
+
+A Spring Boot 3.x service that handles Elasticsearch write contracts and publishes those requests to Kafka for audit/replay purposes.
+
+## Features
+
+- **Spring Boot 3.x**: Uses Spring Boot 3.x with Java 17+ for modern Spring features and improved performance
+- **Elasticsearch Integration**: Handles index, update, and delete operations for Elasticsearch
+- **Kafka Publishing**: Asynchronously publishes all write operations to Kafka
+- **RESTful API**: Provides both custom endpoints and Elasticsearch-compatible paths
+- **Validation**: Request validation with proper error handling
+- **Retry Logic**: Configurable retry mechanism for resilience
+- **Health Checks**: Built-in health endpoints via Spring Actuator
+
+## API Endpoints
+
+### Index Documents
+- `POST /api/elasticsearch/index` - Index document with custom request format
+- `POST /{index}/_doc` - Index document with auto-generated ID (ES-compatible)
+- `POST /{index}/_doc/{id}` - Index document with specific ID (ES-compatible)
+
+### Update Documents
+- `POST /api/elasticsearch/update` - Update document with custom request format
+- `POST /{index}/_update/{id}` - Update document by path (ES-compatible)
+
+### Delete Documents
+- `POST /api/elasticsearch/delete` - Delete document with custom request format
+- `DELETE /{index}/_doc/{id}` - Delete document by path (ES-compatible)
+
+### Health Check
+- `GET /api/elasticsearch/health` - Service health check
+
+## Configuration
+
+Key configuration properties:
+
+```yaml
+spring:
+  elasticsearch:
+    uris: http://localhost:9200
+    username: # optional
+    password: # optional
+  
+  kafka:
+    bootstrap-servers: localhost:9092
+
+elasticsearch-proxy:
+  kafka:
+    topic: elasticsearch-write-operations
+    enable-publishing: true
+  
+  elasticsearch:
+    default-index-prefix: app
+    max-retry-attempts: 3
+    retry-delay-ms: 1000
+```
+
+## Running the Application
+
+1. Ensure Java 17+ is installed
+2. Start Elasticsearch (port 9200)
+3. Start Kafka (port 9092)
+4. Run the application:
+
+```bash
+mvn spring-boot:run
+```
+
+Or build and run the JAR:
+
+```bash
+mvn clean package
+java -jar target/elastic-search-proxy-1.0.0.jar
+```
+
+## Testing
+
+Run unit tests:
+```bash
+mvn test
+```
+
+## Performance Features
+
+This service leverages Spring Boot 3.x features for:
+- Better resource utilization with async processing
+- Improved scalability for I/O-bound operations
+- Thread pool optimization for concurrent requests
+- Non-blocking request handling
+
+## Kafka Integration
+
+All Elasticsearch write operations are published to Kafka with:
+- Message key based on index, document ID, and operation type
+- Structured payload including operation metadata
+- Async publishing to avoid blocking main operations
+- Error handling that doesn't fail the main operation
+
+## Example Usage
+
+### Index a document
+```bash
+curl -X POST "http://localhost:8080/api/elasticsearch/index" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "index": "my-index",
+    "id": "doc-1",
+    "document": {
+      "title": "Sample Document",
+      "content": "This is sample content"
+    }
+  }'
+```
+
+### Update a document
+```bash
+curl -X POST "http://localhost:8080/my-index/_update/doc-1" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Updated Document",
+    "content": "This is updated content"
+  }'
+```
+
+### Delete a document
+```bash
+curl -X DELETE "http://localhost:8080/my-index/_doc/doc-1"
+```

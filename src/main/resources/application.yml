@@ -1,0 +1,55 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: elastic-search-proxy
+  
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
+    username: ${ELASTICSEARCH_USERNAME:}
+    password: ${ELASTICSEARCH_PASSWORD:}
+    connection-timeout: 10s
+    socket-timeout: 30s
+  
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      retries: 3
+      batch-size: 16384
+      linger-ms: 5
+      buffer-memory: 33554432
+      properties:
+        enable.idempotence: true
+        max.in.flight.requests.per.connection: 5
+
+logging:
+  level:
+    com.elasticsearchproxy: INFO
+    org.springframework.kafka: WARN
+    org.elasticsearch: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+
+# Application specific configuration
+elasticsearch-proxy:
+  kafka:
+    topic: elasticsearch-write-operations
+    enable-publishing: ${KAFKA_PUBLISHING_ENABLED:true}
+  
+  elasticsearch:
+    default-index-prefix: ${DEFAULT_INDEX_PREFIX:app}
+    max-retry-attempts: 3
+    retry-delay-ms: 1000
