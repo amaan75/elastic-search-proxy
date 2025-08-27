@@ -19,14 +19,10 @@ repositories {
 dependencies {
     // Spring Boot Starters
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
     implementation 'org.springframework.kafka:spring-kafka'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-aop'
-    
-    // Elasticsearch Client
-    implementation 'co.elastic.clients:elasticsearch-java'
     
     // JSON Processing
     implementation 'com.fasterxml.jackson.core:jackson-databind'
@@ -39,7 +35,6 @@ dependencies {
     testImplementation 'org.springframework.kafka:spring-kafka-test'
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'org.testcontainers:kafka'
-    testImplementation 'org.testcontainers:elasticsearch'
 }
 
 dependencyManagement {

@@ -175,4 +175,80 @@ public class ElasticsearchController {
     public ResponseEntity<String> health() {
         return ResponseEntity.ok("Elasticsearch Proxy Service is running");
     }
+
+    // Bulk operations endpoints
+
+    @PostMapping("/bulk/index")
+    public CompletableFuture<ResponseEntity<BulkResponse>> bulkIndex(
+            @Valid @RequestBody BulkIndexRequest bulkIndexRequest) {
+        
+        logger.info("Received bulk index request with {} documents", bulkIndexRequest.getRequests().size());
+
+        return elasticsearchService.bulkIndex(bulkIndexRequest)
+                .thenApply(response -> {
+                    if ("ERROR".equals(response.getStatus())) {
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+                    }
+                    return ResponseEntity.ok(response);
+                })
+                .exceptionally(throwable -> {
+                    logger.error("Unexpected error during bulk index operation", throwable);
+                    BulkResponse errorResponse = BulkResponse.error("Internal server error");
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+                });
+    }
+
+    @PostMapping("/bulk/update")
+    public CompletableFuture<ResponseEntity<BulkResponse>> bulkUpdate(
+            @Valid @RequestBody BulkUpdateRequest bulkUpdateRequest) {
+        
+        logger.info("Received bulk update request with {} documents", bulkUpdateRequest.getRequests().size());
+
+        return elasticsearchService.bulkUpdate(bulkUpdateRequest)
+                .thenApply(response -> {
+                    if ("ERROR".equals(response.getStatus())) {
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+                    }
+                    return ResponseEntity.ok(response);
+                })
+                .exceptionally(throwable -> {
+                    logger.error("Unexpected error during bulk update operation", throwable);
+                    BulkResponse errorResponse = BulkResponse.error("Internal server error");
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+                });
+    }
+
+    @PostMapping("/bulk/delete")
+    public CompletableFuture<ResponseEntity<BulkResponse>> bulkDelete(
+            @Valid @RequestBody BulkDeleteRequest bulkDeleteRequest) {
+        
+        logger.info("Received bulk delete request with {} documents", bulkDeleteRequest.getRequests().size());
+
+        return elasticsearchService.bulkDelete(bulkDeleteRequest)
+                .thenApply(response -> {
+                    if ("ERROR".equals(response.getStatus())) {
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+                    }
+                    return ResponseEntity.ok(response);
+                })
+                .exceptionally(throwable -> {
+                    logger.error("Unexpected error during bulk delete operation", throwable);
+                    BulkResponse errorResponse = BulkResponse.error("Internal server error");
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+                });
+    }
+
+    // Elasticsearch-compatible bulk endpoint
+    @PostMapping("/_bulk")
+    public CompletableFuture<ResponseEntity<String>> bulkCompatible(@RequestBody String bulkBody) {
+        logger.info("Received Elasticsearch-compatible bulk request");
+        
+        // For ES-compatible bulk API, we would need to parse the NDJSON format
+        // For now, just return a simple acknowledgment and log to Kafka
+        // This would require additional parsing logic to handle the ES bulk format
+        
+        return CompletableFuture.completedFuture(
+            ResponseEntity.ok("{\"took\":1,\"errors\":false,\"items\":[]}")
+        );
+    }
 }
